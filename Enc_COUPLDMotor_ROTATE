@@ -1,0 +1,16 @@
+#include<MobaTools.h>
+#define stepPin 22
+#define dirPin 24
+const int stepsPerRev = 400;
+MoToStepper myStepper (stepsPerRev, STEPDIR);
+
+void setup() {
+  myStepper.attach( stepPin, dirPin );
+  myStepper.setSpeed( 5000 );  // 60 Rev/Min ( if stepsPerRev is set correctly )
+  myStepper.setRampLen( 20 );
+}
+
+void loop() {
+  myStepper.rotate(1);
+
+}
