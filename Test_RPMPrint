@@ -1,0 +1,46 @@
+volatile unsigned int pulseCount = 0;  // Number of pulses counted in the time window
+unsigned long prevMillis = 0;          // To track the time for calculating RPM
+const int timeWindow = 1000;           // Time window in milliseconds for RPM calculation
+float rpm = 0;                         // Calculated RPM
+
+const int PPR = 600;                   // Pulses per revolution of the encoder (replace with your encoder's PPR)
+unsigned long debounceDelay = 2000;    // Debouncing for pulse (adjust if necessary)
+unsigned long lastPulseTime = 0;       // Time of the last valid pulse to handle debouncing
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(2, INPUT_PULLUP);  // Encoder A
+  pinMode(3, INPUT_PULLUP);  // Encoder B
+
+  // Attach an interrupt to the encoder A channel
+  attachInterrupt(digitalPinToInterrupt(2), encoderISR_A, RISING);
+}
+
+void loop() {
+  unsigned long currentMillis = millis();
+
+  // Every `timeWindow` milliseconds, calculate the RPM
+  if (currentMillis - prevMillis >= timeWindow) {
+    prevMillis = currentMillis;
+
+    // Calculate RPM based on the pulse count during the last time window
+    rpm = (pulseCount * 60.0) / (PPR);  // RPM = (pulses in 1 second) * 60 / Pulses per revolution (PPR)
+    
+    // Print RPM to the serial monitor
+    Serial.print("RPM: ");
+    Serial.println(rpm);
+
+    // Reset pulseCount for the next time window
+    pulseCount = 0;
+  }
+}
+
+// Interrupt Service Routine (ISR) for encoder A channel
+void encoderISR_A() {
+  unsigned long currentTime = micros();  // Get the current time in microseconds
+  if (currentTime - lastPulseTime > debounceDelay) {  // Check if enough time has passed for debouncing
+    pulseCount++;  // Increment pulse count
+    lastPulseTime = currentTime;  // Update the last pulse time
+  }
+}
